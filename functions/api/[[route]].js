@@ -173,6 +173,8 @@ async function fetchUser(c, userId) {
 
 add('POST', '/users', async (c) => {
   const body = await readJson(c.request);
+  const count = await DB(c).prepare('SELECT COUNT(*) AS n FROM users').first();
+  if (Number(count?.n || 0) >= 100) throw new HttpError(409, 'سقف نسخه دمو به ۱۰۰ کاربر رسیده است');
   const name = vStr(body.name, 'نام کاربر', 1, 64);
   const limit = parseTraffic(body);
   const ex = parseExpiry(body, c.now, false);
@@ -264,8 +266,9 @@ userAction('extend', async (c, u, body) => {
 // ---------------- Configs ----------------
 const CONFIG_FIELDS = 'name, address, port, tls, sni, host_header, path, fingerprint, alpn, early_data, status';
 function parseConfig(body) {
-  const port = vInt(body.port, 'پورت', 1, 65535);
-  const tls = body.tls ? 1 : 0;
+  // حالت پیش‌فرض مخصوص Cloudflare: دامنه فعلی پنل در buildLink به‌عنوان endpoint استفاده می‌شود.
+  const port = body.port == null || body.port === '' ? 443 : vInt(body.port, 'پورت', 1, 65535);
+  const tls = body.tls == null ? 1 : (body.tls ? 1 : 0);
   if (![...HTTPS_PORTS, ...HTTP_PORTS].includes(port)) throw new HttpError(400, `پورت ${port} در فهرست پورت‌های مجاز این پنل نیست.`);
   if (tls && !HTTPS_PORTS.includes(port)) throw new HttpError(400, `پورت ${port} فقط بدون TLS کار می‌کند. TLS را خاموش کنید یا پورت 443/8443/2053/2083/2087/2096 را بزنید.`);
   if (!tls && !HTTP_PORTS.includes(port)) throw new HttpError(400, `پورت ${port} فقط با TLS کار می‌کند. TLS را روشن کنید.`);
