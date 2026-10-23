@@ -61,6 +61,6 @@ export function buildLink(uuid, cfg, settings, reqHost) {
   }
   q.set('type', 'ws');
   q.set('host', hostHeader);
-  q.set('path', cfg.path + (cfg.early_data > 0 ? `?ed=${cfg.early_data}` : ''));
+  q.set('path', cfg.path || '/ws');
   return `vless://${uuid}@${wrapV6(address)}:${cfg.port}?${q.toString()}#${encodeURIComponent(cfg.name)}`;
 }
