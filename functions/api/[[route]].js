@@ -298,7 +298,7 @@ add('POST', '/configs', async (c) => {
   const body = await readJson(c.request);
   const f = parseConfig(body);
   const r = await DB(c).prepare(
-    `INSERT INTO configs (${CONFIG_FIELDS}, protocol, transport, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?, 'vless','ws',?,?)`
+    `INSERT INTO configs (${CONFIG_FIELDS}, protocol, transport, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,'vless','ws',?,?)`
   ).bind(f.name, f.address, f.port, f.tls, f.sni, f.host_header, f.path, f.fingerprint, f.alpn, f.early_data, f.status, c.now, c.now).run();
   const cid = r.meta.last_row_id;
   if (body.assign_all !== false) await DB(c).prepare('INSERT OR IGNORE INTO user_configs (user_id, config_id) SELECT id, ? FROM users').bind(cid).run();
