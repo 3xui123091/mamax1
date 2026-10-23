@@ -266,11 +266,11 @@ const CONFIG_FIELDS = 'name, address, port, tls, sni, host_header, path, fingerp
 function parseConfig(body) {
   const port = vInt(body.port, 'پورت', 1, 65535);
   const tls = body.tls ? 1 : 0;
-  if (![...HTTPS_PORTS, ...HTTP_PORTS].includes(port)) throw new HttpError(400, `پورت ${port} توسط Cloudflare پروکسی نمی‌شود. از پورت‌های فهرست‌شده استفاده کنید.`);
+  if (![...HTTPS_PORTS, ...HTTP_PORTS].includes(port)) throw new HttpError(400, `پورت ${port} در فهرست پورت‌های مجاز این پنل نیست.`);
   if (tls && !HTTPS_PORTS.includes(port)) throw new HttpError(400, `پورت ${port} فقط بدون TLS کار می‌کند. TLS را خاموش کنید یا پورت 443/8443/2053/2083/2087/2096 را بزنید.`);
   if (!tls && !HTTP_PORTS.includes(port)) throw new HttpError(400, `پورت ${port} فقط با TLS کار می‌کند. TLS را روشن کنید.`);
   const path = String(body.path || '/ws').trim();
-  if (!/^\/ws(\/[A-Za-z0-9._~\-\/]{0,100})?$/.test(path)) throw new HttpError(400, 'Path باید با /ws شروع شود (مثلاً /ws یا /ws/mamax)');
+  if (!/^\/[A-Za-z0-9._~\-\/]{0,120}$/.test(path)) throw new HttpError(400, 'Path نامعتبر است');
   const fp = String(body.fingerprint || 'chrome');
   if (!['chrome', 'firefox', 'safari', 'ios', 'android', 'edge', 'randomized', ''].includes(fp)) throw new HttpError(400, 'Fingerprint نامعتبر است');
   const alpn = String(body.alpn ?? 'http/1.1');
@@ -332,7 +332,7 @@ add('GET', '/settings', async (c) => ok({ settings: await getSettings(c.env), ad
 add('PUT', '/settings', async (c) => {
   const b = await readJson(c.request);
   const port = vInt(b.default_port, 'پورت پیش‌فرض', 1, 65535);
-  if (![...HTTPS_PORTS, ...HTTP_PORTS].includes(port)) throw new HttpError(400, 'پورت پیش‌فرض باید یکی از پورت‌های سازگار با Cloudflare باشد');
+  if (![...HTTPS_PORTS, ...HTTP_PORTS].includes(port)) throw new HttpError(400, 'پورت پیش‌فرض باید یکی از پورت‌های مجاز پنل باشد');
   const gb = Number(b.default_traffic_gb);
   if (!Number.isFinite(gb) || gb < 0 || gb > 1048576) throw new HttpError(400, 'حجم پیش‌فرض نامعتبر است');
   await saveSettings(c.env, {
